@@ -1,28 +1,50 @@
-const movieApi = require('../Service/api-client')
+const movieApi = require('../Service/api-client');
 
-async function getMovie(req, res) {
-    try{
-        const { t, s, i } = req.query;
-        console.log(req.query);
-        
-        const apiResponse = await movieApi.get('/', {
+// Search by title
+async function searchMovies(req, res) {
+    const title = req.query.title;
+    if (!title) {
+        return res.status(400).json({ error: 'Title query parameter is required' });
+    }
+    try {
+        const apiResponse = await movieApi.get(`?title=${title}`, {
             params: {
-                apikey: process.env.OMDB_API_KEY,
-                t,//by title
-                s, // from search bar
-                i // id number
+                s: title,
+                apikey: process.env.OMDB_API_KEY
             }
-        })
-        res.json(apiResponse.data)
-    }catch(error){
+        });
+        res.json(apiResponse.data);
+    } catch (error) {
         if (error.response) {
-        console.error("API Error:", error.response.status, error.response.data);
-        res.status(error.response.status).json({ message: "An API error has occurred." });
+            console.error('API Error:', error.response.status, error.response.data);
+            res.status(error.response.status).json({ message: 'An API error has occurred.' });
         } else {
-        console.error("Network Error:", error.message);
-        res.status(502).json({ message: "A Network error has occurred." });
+            console.error('Network Error:', error.message);
+            res.status(502).json({ message: 'A Network error has occurred.' });
         }
     }
 }
 
-module.exports = { getMovie }
+// Get movie by ID
+async function getMovieDetails(req, res) {
+    const id = req.params.id;
+    try {
+        const apiResponse = await movieApi.get('/', {
+            params: {
+                i: id,
+                apikey: process.env.OMDB_API_KEY
+            }
+        });
+        res.json(apiResponse.data);
+    } catch (error) {
+        if (error.response) {
+            console.error('API Error:', error.response.status, error.response.data);
+            res.status(error.response.status).json({ message: 'An API error has occurred.' });
+        } else {
+            console.error('Network Error:', error.message);
+            res.status(502).json({ message: 'A Network error has occurred.' });
+        }
+    }
+}
+
+module.exports = { searchMovies, getMovieDetails };

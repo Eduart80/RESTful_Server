@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Finder</title>
+</head>
+<body>
+  <h1>Movie Finder</h1>
+  <form id="searchForm">
+    <input type="text" id="titleInput" placeholder="Enter movie title" required />
+    <button type="submit">Search</button>
+  </form>
+  <div id="results"></div>
+
+  <script>
+    // fetch by title
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const title = document.getElementById('titleInput').value;
+      fetch(`http://localhost:3000/api/search?title=${encodeURIComponent(title)}`)
+        .then(res => res.json())
+        .then(data => {
+          const resultsDiv = document.getElementById('results');
+          if (data.Search) {
+            resultsDiv.innerHTML = data.Search.map(movie => `
+              <div>
+                <strong>${movie.Title}</strong> (${movie.Year})<br>
+                <img src="${movie.Poster}" alt="Poster" height="100" />
+                <button onclick="getDetails('${movie.imdbID}')">Details</button>
+              </div>
+            `).join('');
+          } else {
+            resultsDiv.textContent = 'No results found.';
+          }
+        })
+        .catch(() => {
+          document.getElementById('results').textContent = 'Error fetching data.';
+        });
+    });
+
+    // Fetch full movie details
+    function getDetails(imdbID) {
+      fetch(`http://localhost:3000/api/movies/${imdbID}`)
+        .then(res => res.json())
+        .then(data => {
+          const result = document.getElementById('results');
+          if (data && data.Title) {
+            result.innerHTML = `
+              <h2>${data.Title} (${data.Year})</h2>
+              <img src="${data.Poster}" alt="Poster" height="200" /><br>
+              <strong>Rated:</strong> ${data.Rated}<br>
+              <strong>Released:</strong> ${data.Released}<br>
+              <strong>Runtime:</strong> ${data.Runtime}<br>
+              <strong>Genre:</strong> ${data.Genre}<br>
+              <strong>Director:</strong> ${data.Director}<br>
+              <strong>Writer:</strong> ${data.Writer}<br>
+              <strong>Actors:</strong> ${data.Actors}<br>
+              <strong>Plot:</strong> ${data.Plot}<br>
+              <strong>Language:</strong> ${data.Language}<br>
+              <strong>Country:</strong> ${data.Country}<br>
+              <strong>Awards:</strong> ${data.Awards}<br>
+              <strong>Ratings:</strong> ${data.Ratings ? data.Ratings.map(r => `${r.Source}: ${r.Value}`).join(', ') : ''}<br>
+              <strong>Metascore:</strong> ${data.Metascore}<br>
+              <strong>IMDb Rating:</strong> ${data.imdbRating}<br>
+              <strong>IMDb Votes:</strong> ${data.imdbVotes}<br>
+              <strong>BoxOffice:</strong> ${data.BoxOffice}<br>
+              <strong>Production:</strong> ${data.Production}<br>
+              <strong>Website:</strong> ${data.Website}<br>
+              <button onclick="window.location.reload()">Back to Search</button>
+            `;
+          } else {
+            result.textContent = 'No details found.';
+          }
+        })
+        .catch(() => {
+          document.getElementById('results').textContent = 'Error fetching details.';
+        });
+    }
+  </script>
+</body>
+</html>
